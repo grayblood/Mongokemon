@@ -1,0 +1,182 @@
+import pymongo
+from pymongo import MongoClient
+import datetime
+import random
+
+client = MongoClient()
+##print(client.list_database_names())
+
+db = client["project"]
+##print(db.list_collection_names())
+coll = db["pokemon"]
+coll2 = db["Team"]
+coll3 = db["Move"]
+
+
+def Search(noum, consulta):
+  if consulta == "evol":
+    if isinstance(noum, int):
+      doc2 = coll.find_one({"id":noum})
+    else:
+      doc2 = coll.find_one({"name":noum})
+  
+    results = list()
+    if "prev_evolution" in doc2:
+      for p in doc2["prev_evolution"]:
+        results.append(p["name"])
+    results.append(doc2["name"])
+    if "next_evolution" in doc2:
+      for n in doc2["next_evolution"]:
+        results.append(n["name"])
+    print(results)    
+
+  else:
+    if isinstance(noum, int):
+      doc2 = coll.find_one({"id":noum},{"_id":0,"name":1, consulta:1})
+    else:
+      doc2 = coll.find_one({"name":noum},{"_id":0,"name":1, consulta:1})
+    print("________________________________________")
+
+    print(doc2)  
+    print("________________________________________")
+
+def moves():
+  
+  
+  record = { 
+    "_id":{"oid":"66f56170ee9d4bd5e610d646"},
+    "name":"bubbles",
+    "pwr":13.0,
+    "type":"Water"
+    }
+            
+
+  rec_id1 = coll3.insert_one(record)
+  record = { 
+    "_id":{"oid":"66f56170ee9d4bd5e610d645"},
+    "name":"amber",
+    "pwr":13.0,
+    "type":"Fire"
+    }
+            
+
+  rec_id1 = coll3.insert_one(record)
+  record = { 
+    "_id":{"oid":"66f56170ee9d4bd5e610d644"},
+    "name":"tree",
+    "pwr":13.0,
+    "type":"Grass"
+    }
+            
+
+  rec_id1 = coll3.insert_one(record)
+
+def Capturar(noum):
+  if isinstance(noum, int):
+    doc = coll.find_one({"id":noum})
+  else:
+    doc = coll.find_one({"name":noum})  
+
+  record = { 
+            "num":doc["num"],
+            "name": doc["name"],
+            "type":doc["type"],
+            "catch_date":"",
+            "CP": 340.0,
+            "HPmax": 200,
+            "HP": 200,
+            "atk": 20,
+            "def": 20,
+            "energy": 0,
+            "moves": {
+              "fast": "66f56170ee9d4bd5e610d644",
+              "charged": "66f56170ee9d4bd5e610d644"
+            },
+            "candy":doc["candy"],
+            "candy_count":doc["candy_count"],
+            "current_candy":0,
+            "weaknesses": doc["weaknesses"],
+
+
+            }
+            
+
+  rec_id1 = coll2.insert_one(record)
+
+def Release(noum):
+  doc = any
+  if isinstance(noum, int):
+    doc = coll2.find_one({"id":noum}) 
+  else:
+    doc = coll2.find_one({"name":noum}) 
+  if doc is None:
+    print("No tens aquest Pokémon")
+  else:
+    coll2.delete_one({"id":doc["id"]}) 
+
+def DarCaramelo(noum):
+  doc2 = any
+  if isinstance(noum, int):
+    doc2 = coll2.find_one({"id":noum}) 
+  else:
+    doc2 = coll2.find_one({"name":noum}) 
+  
+  if doc2 is None:
+    print("No tens aquest Pokémon")
+  
+  else:
+    currentcandy = doc2["current_candy"]
+    currentcandy +=1
+    if currentcandy >= doc2["candy_count"]:
+      
+      pokeid = doc2["id"]
+      
+      pokeid+=1
+      doc3 = coll.find_one({"id":pokeid})
+     
+      eid = doc3["name"]
+      print(doc2["name"]," evoluciona a ",doc3["name"])
+      coll2.update_one({"name":doc2["name"]},{ "$set": { "current_candy": 0, "name":eid, "num":doc3["num"], "candy_count": doc3["candy_count"]} })
+      
+    else:
+      print("Caramel donat a ",doc2["name"],", Caramels totals: ",currentcandy)
+      coll2.update_one({"id":doc2["id"]},{ "$set": { "current_candy": currentcandy} })
+
+def Pokemons():
+  doc = coll.find({},{"_id":0,"name":1})
+  for i in doc:
+    print(i)
+
+   
+def Team():
+  doc = coll2.find({},{"_id":0,"name":1})
+  for i in doc:
+    print(i)
+
+
+
+end = False
+while end == False:
+  print("Pokemons, Team, Search NombrePokemon consulta,DarCaramelo NombrePokemon, Capturar NombrePokemon, Release NombrePokemon, End")
+  x = input().split()
+  
+  if x[0] == "Search":
+    Search(x[1],x[2])
+  if x[0] == "DarCaramelo":
+    DarCaramelo(x[1])
+  if x[0] == "Capturar":
+    Capturar(x[1])
+  if x[0] == "Release":
+    Release(x[1])
+  if x[0] == "Pokemons":
+    Pokemons()
+  if x[0] == "Team":
+    Team()
+  if x[0] == "End":
+    end = True
+
+
+doc2 = coll.find_one({"name":"Bulbausaur"},{"_id":0, "name":1})
+print("________________________________________")
+print(doc2)  
+print("________________________________________")

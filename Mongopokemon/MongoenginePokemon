@@ -1,0 +1,305 @@
+from mongoengine import *
+from datetime import date
+
+import random
+
+
+db = connect('projecte')
+
+#Tupla
+TYPES = ('Bug','Dark','Dragon','Electric','Fairy','Fight','Fire','Flying','Ghost','Grass','Ground','Ice','Normal','Poison','Psychic','Rock','Steel','Water')
+
+
+    
+#Models
+class Evolution(EmbeddedDocument):
+    num = StringField()
+    name = StringField()
+class Move(Document):
+    meta = {'allow_inheritance': True}
+    name = StringField(required=True)
+    pwr = DecimalField(required=True, min_value=0, max_value=180)
+    tipus = StringField(choices=TYPES, required=True)
+class FastMove(Move):
+    energyGain = IntField(required=True, min_value=0, max_value=20)
+class ChargedMove(Move):
+    energyCost = IntField(required=True, min_value=33, max_value=100)
+class pokemon(Document):
+    meta = {'allow_inheritance': True}
+    #db_field busca el nombre en mongo, si es que es distinto a como lo tienes en el nombre de la clase
+    pid = FloatField(required = True, db_field='id')
+    num = StringField(required = True)
+    name = StringField(required = True)
+    img = StringField(required = True)
+    #type es lista de strings. Pero tienen que ser aquellas definidas en la tupla TYPES (funciona como un enum)
+    type = ListField(choice = TYPES, required = True)
+    height = StringField(required = True)
+    weight = StringField(required = True)
+    candy = StringField(required = True)
+    candy_count = FloatField(min_value = 0, max_value = 500)
+    egg = StringField(required = True)
+    spawn_chance = FloatField(required = True)
+    avg_spawns = FloatField(required = True)
+    spawn_time = StringField(required = True)
+    multipliers = ListField(FloatField(),required = True)
+    weaknesses = ListField(choice = TYPES,required = True)
+    #next_evolutione s una lista de Evolution, que es el documento incrustado que acabamos de crear
+    next_evolution = ListField(EmbeddedDocumentField('Evolution'))
+    prev_evolution = ListField(EmbeddedDocumentField('Evolution'))
+class Team(Document):
+    meta = {'allow_inheritance': True}
+    pid = FloatField(required = True, db_field='id')
+    num = StringField(required = True)
+    name = StringField(required = True)
+    img = StringField(required = True)
+    type = ListField(choice = TYPES, required = True)
+    catch_date = StringField(required = True)
+    height = StringField(required = True)
+    weight = StringField(required = True)
+    candy = StringField(required = True)
+    candy_count = IntField(min_value = 0, max_value = 500)
+    current_candy = IntField(min_value = 0, max_value = 500)
+    egg = StringField(required = True)
+    multipliers = ListField(FloatField(),required = True)
+    weaknesses = ListField(choice = TYPES,required = True)
+    HPMax = IntField(min_value=200, max_value=1000)
+    HP = IntField(min_value=200, max_value=1000)
+    Ataque = IntField(min_value=10, max_value=50)
+    Defensa = IntField(min_value=10, max_value=50)
+    CP= IntField(min_value=0,  max_value=1100)
+    Energy = IntField(min_value=0, max_value=100)
+    MoveRapido = ReferenceField(FastMove)
+    MoveCargado = ReferenceField(ChargedMove)
+    next_evolution = ListField(EmbeddedDocumentField('Evolution'))
+    prev_evolution = ListField(EmbeddedDocumentField('Evolution'))
+##########################
+###### Function Zone ######
+##########################
+
+### Default creation ###
+def createDefMoves():
+    steelwing = FastMove(name='Steel Wing', pwr = 11, tipus = 'Steel' )
+    steelwing.energyGain = 7
+    steelwing.save()
+
+    dragontail = FastMove(name='Dragon Tail', pwr = 15, tipus = 'Dragon' )
+    dragontail.energyGain = 8
+    dragontail.save()
+
+    doomdesire = ChargedMove(name = 'Doom Desire', pwr = 80, tipus = 'Steel')
+    doomdesire.energyCost = 50
+    doomdesire.save()
+
+    futuresight = ChargedMove(name = 'Future Sight', pwr = 120, tipus = 'Psychic')
+    futuresight.energyCost = 100
+    futuresight.save()
+def createDefPoke():
+    Chikorita = pokemon(
+        pid = 152.0,
+        num = "152",
+        name = "Chiekorita",
+        img = "a.com",
+        type = ["Grass"],
+        height = "0.9 m",
+        weight = "6.4 kg",
+        candy = "Chikorita Candy",
+        candy_count = 25.0,
+        egg = "2 Km",
+        spawn_chance = 0.69,
+        avg_spawns = 69.0,
+        spawn_time = "20:00",
+        multipliers = [1.58],
+        weaknesses = ["Fire","Ice","Flying","Bug"],
+        next_evolution = [ {"num":"153","name":"Bayleaf"}, {"num":"154","name":"Meganium"} ]
+    )
+
+
+    Bayleaf = pokemon(
+        pid = 153.0,
+        num = "153",
+        name = "Bayleaf",
+        img = "a.com",
+        type = ["Grass"],
+        height = "0.9 m",
+        weight = "6.4 kg",
+        candy = "Chikorita Candy",
+        candy_count = 100.0,
+        egg = "2 Km",
+        spawn_chance = 0.69,
+        avg_spawns = 69.0,
+        spawn_time = "20:00",
+        multipliers = [1.58],
+        weaknesses = ["Fire","Ice","Flying","Bug"],
+        #next_evolutione s una lista de Evolution, que es el documento incrustado que acabamos de crear
+        next_evolution = [ {"num":"154","name":"Meganium"} ]
+    )
+    Chikorita.save()
+    Bayleaf.save()
+
+    Chiekorita = pokemon(
+        pid = 152.0,
+        num = "152",
+        name = "Chiekorita",
+        img = "a.com",
+        type = ["Grass"],
+        height = "0.9 m",
+        weight = "6.4 kg",
+        candy = "Chikorita Candy",
+        candy_count = 25.0,
+        egg = "2 Km",
+        spawn_chance = 0.69,
+        avg_spawns = 69.0,
+        spawn_time = "20:00",
+        multipliers = [1.58],
+        weaknesses = ["Fire","Ice","Flying","Bug"],
+        next_evolution = [ {"num":"153","name":"Bayleaf"}, {"num":"154","name":"Meganium"} ]
+    )
+
+
+    Boyleaf = pokemon(
+        pid = 153.0,
+        num = "153",
+        name = "Bayleaf",
+        img = "a.com",
+        type = ["Grass"],
+        height = "0.9 m",
+        weight = "6.4 kg",
+        candy = "Chikorita Candy",
+        candy_count = 100.0,
+        egg = "2 Km",
+        spawn_chance = 0.69,
+        avg_spawns = 69.0,
+        spawn_time = "20:00",
+        multipliers = [1.58],
+        weaknesses = ["Fire","Ice","Flying","Bug"],
+        #next_evolutione s una lista de Evolution, que es el documento incrustado que acabamos de crear
+        next_evolution = [ {"num":"154","name":"Meganium"} ]
+    )
+    Chiekorita.save()
+    Boyleaf.save()
+
+### Print functions ###
+def allPokemons():
+    #NombreDelaClase.objects es un campo estatico que te deveuvlve una lista con todos los documentos de esa colleciton
+    for pkmn in pokemon.objects:
+        print(pkmn.name)
+def allTeam():
+    #NombreDelaClase.objects es un campo estatico que te deveuvlve una lista con todos los documentos de esa colleciton
+    for pkmn in Team.objects:
+        #print(pkmn.name)
+        print(pkmn.name)
+def allMoves():
+    #NombreDelaClase.objects es un campo estatico que te deveuvlve una lista con todos los documentos de esa colleciton
+    for pkmn in Move.objects:
+        print(pkmn.name)
+
+### Search Functions ###
+def searchMoveFast(nom):
+    for pkmn in FastMove.objects:
+        if(pkmn.name == nom):
+            return pkmn
+def searchMoveCharged(nom):
+    for pkmn in ChargedMove.objects:
+        if(pkmn.name == nom):
+            return pkmn
+
+
+def printAll():
+    print("_____________________Moves_______________________")
+    allMoves()
+    print("_____________________Pokemons_______________________")
+    allPokemons()
+    print("___________________Team_________________________")
+    allTeam()
+    print("____________________________________________")
+
+### Insert Functions ###
+def Capturar(nom):
+    pkm = pokemon.objects(name = nom)[0]
+    #mF = searchMoveFast(moveFast)
+    #mC = searchMoveCharged(moveCharged)
+    
+    today = date.today()
+    hpr = random.randint(200,1000)
+    atk = random.randint(10,50)
+    defe = random.randint(10,50)
+    cp = hpr + atk + defe
+    
+    pkemon = Team(  
+        pid = pkm.pid,
+        num = pkm.num,
+        name = pkm.name,
+        img = pkm.img,
+        type = pkm.type,
+        height = pkm.height,
+        weight = pkm.weight,
+        candy = pkm.candy,
+        catch_date = today.strftime("%d/%m/%Y"),
+        candy_count = pkm.candy_count,
+        current_candy = 0,
+        egg = pkm.egg,
+        multipliers = pkm.multipliers,
+        weaknesses = pkm.weaknesses,
+        HPMax = hpr,
+        HP = hpr,
+        Ataque= atk,
+        Defensa = defe,
+        CP = cp,
+        Energy = 0,
+        #MoveRapido = mF,
+        #MoveCargado = mC,
+        next_evolution = pkm.next_evolution
+    )
+
+    pkemon.save()
+    
+### Update Functions ###
+def DarCaramelo(nom):
+    pkm = Team.objects(name = nom)[0]
+    pkm.current_candy +=1
+    if(pkm.current_candy >= pkm.candy_count ):
+        evolucionar(nom)
+    else:
+        pkm.save()
+def evolucionar(nom):
+    pkm = pokemon.objects(name = nom)[0]
+    pkmt = Team.objects(name = nom)[0]
+
+    pkm2 = pokemon.objects(name = pkm.next_evolution[0].name)
+    pkmt.name = pkm2[0].name
+    pkmt.num = pkm2[0].num
+    pkmt.candy_count = pkm2[0].candy_count
+    pkmt.current_candy =0
+    pkmt.save()  
+
+##########################
+####### Call Zone ########
+##########################
+
+### Default Call ###
+#createDefPoke()
+#createDefMoves()
+
+### Capture Call ###
+
+#Capturar("Chiekorita","Steel Wing","Doom Desire")
+
+### Give Candy ###
+
+#donaCaramel("Chiekorita")
+
+### Input Zone ###
+end = False
+while end == False:
+  print("All,DarCaramelo NombrePokemon, Capturar NombrePokemon, End")
+  x = input().split()
+  if x[0] == "DarCaramelo":
+    DarCaramelo(x[1])
+  if x[0] == "Capturar":
+    Capturar(x[1])
+  if x[0] == "All":
+    printAll()
+  if x[0] == "End":
+    end = True
+
+
